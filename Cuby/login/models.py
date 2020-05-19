@@ -28,5 +28,7 @@ class User(models.Model):
     profile_photo = models.FileField(verbose_name="头像", upload_to='img/profile_photo',
                                      default="img/profile_photo/default_handsome.jpg")
     auth = models.CharField(verbose_name="权限", max_length=128, choices=admin, default='student')
+    favourite_articles = models.ManyToManyField("Art")
+    favourite_resources = models.ManyToManyField("Resource")
     follow = models.ManyToManyField('self')
     fan = models.ManyToManyField('self')
