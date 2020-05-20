@@ -1,4 +1,7 @@
 .idea
 __pycache__/
+frontend/*
+!frontend/dist
 *.py[cod]
 *$py.class
+

@@ -19,11 +19,11 @@ def index(request):
 def login(request):
     if request.session.get('is_login', None):
         return redirect(reverse('index'))
-    if request.method == 'POST':
+    if request.method == 'POST':    # GET
         data = simplejson.loads(request.body)
         new_user = login_models.User()
         new_user.name = data['name']
         new_user.password = hash(data['password'])
         new_user.account = data['account']
-        new_user.save()
+        new_user.save()     # save后才有id属性
         return JsonResponse({'status': 0})
