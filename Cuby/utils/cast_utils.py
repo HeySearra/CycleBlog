@@ -2,8 +2,12 @@ import re
 import json
 
 
-def parse_str(s: str):
-    return json.loads(s)
+def data_to_str(data):
+    return json.dumps(data, indent=2, sort_keys=False)
+
+
+def str_to_data(s: str):
+    return json.loads(s) if s else None
 
 
 def parse_datetime(datetime):
