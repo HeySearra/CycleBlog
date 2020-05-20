@@ -2,8 +2,9 @@ import re
 import json
 
 
-def data_to_str(data):
-    return json.dumps(data, indent=2, sort_keys=False)
+def data_to_str(data: object):
+    # todo:
+    return json.dumps(data, ensure_ascii=False, indent=2, sort_keys=False)
 
 
 def str_to_data(s: str):
