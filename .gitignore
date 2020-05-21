@@ -2,6 +2,9 @@
 __pycache__/
 frontend/*
 !frontend/dist
+Cuby/Cuby/settings.py
+migrations
+
 *.py[cod]
 *$py.class
 

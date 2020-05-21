@@ -1,6 +1,8 @@
 from django.core.exceptions import ValidationError
+from django.utils.deconstruct import deconstructible
 
 
+@deconstructible
 class LambdaValidator(object):
     def __init__(self, l, code=0, message=''):
         self.l, self.code, self.message = l, code, message
