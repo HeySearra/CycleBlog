@@ -1,8 +1,6 @@
 .idea
 __pycache__/
-frontend/*
-!frontend/dist
-Cuby/Cuby/settings.py
+node_modules
 migrations
 
 *.py[cod]
