@@ -1,43 +1,29 @@
 from django.db import models
-import sys
-# Create your models here.
 
 
-
-class Atc(models.Model):
-
+class Article(models.Model):
     title = models.CharField(verbose_name="标题", max_length=256)
-    content = models.TextField(verbose_name="文章全文代码")
-    simple_content = models.CharField(verbose_name="文章前200字内容", max_length=256)
+    abstract = models.CharField(verbose_name="摘要", max_length=256)
+    content = models.TextField(verbose_name="全文")
+    tag = models.CharField(verbose_name="标签集合", max_length=512)
+    # column = models.CharField(verbose_name="专栏", max_length=256)  # todo: Column里面已经多对多了，现在还要么？
     views = models.IntegerField(verbose_name="阅读量")
     stars = models.IntegerField(verbose_name="收藏量")
     likes = models.IntegerField(verbose_name="点赞量")
-    tag = models.CharField(verbose_name="文章的标签", max_length=256)
-    column = models.CharField(verbose_name="文章的专栏", max_length=256)
-    url = models.CharField(verbose_name="前往文章的url", max_length=256)
-    edit_year = models.IntegerField(verbose_name="文章最近修改时间：年")
-    edit_month = models.IntegerField(verbose_name="文章最近修改时间：月")
-    edit_day = models.IntegerField(verbose_name="文章最近修改时间：日")
-    edit_hour = models.IntegerField(verbose_name="文章最近修改时间：时")
-    edit_minute = models.IntegerField(verbose_name="文章最近修改时间：分")
-    edit_second = models.IntegerField(verbose_name="文章最近修改时间：秒")
-    author_name = models.ForeignKey('login.User', related_name="article_author", on_delete=models.CASCADE)
+    url = models.CharField(verbose_name="文章url", max_length=256)
+    create_time = models.DateTimeField(verbose_name="创建时间", auto_now_add=True)
+    edit_time = models.DateTimeField(verbose_name="修改时间", auto_now=True)
+    author_name = models.ForeignKey('user.User', related_name="article_author", on_delete=models.CASCADE)
 
 
 class Column(models.Model):
     title = models.CharField(verbose_name="专栏名称", max_length=256)
     views = models.IntegerField(verbose_name="阅读量")
-    article_num = models.IntegerField(verbose_name="专栏下文章的数量")
-    articles = models.ManyToManyField(Atc)
-
-
-class Comment(models.Model):
-    comment_to = models.ForeignKey('login.User', related_name="comment_author", on_delete=models.CASCADE)
-    content = models.CharField(verbose_name="文章全文代码", max_length=512)
-    likes = models.IntegerField(verbose_name="点赞量")
+    article_num = models.IntegerField(verbose_name="文章数量")
+    articles = models.ManyToManyField(Article, related_name='articles_in_column')
 
 
 class Tag(models.Model):
     name = models.CharField(verbose_name="标签名", max_length=256)
     article_num = models.IntegerField(verbose_name="标签下文章的数量")
-    articles = models.ManyToManyField(Atc)
+    articles = models.ManyToManyField(Article, related_name='tagged_articles')

@@ -45,7 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'login',
+    'user',
     'article',
     'resource',
 ]
@@ -126,7 +126,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'Cubydb',
         'USER': 'root',
-        'PASSWORD': '',
+        'PASSWORD': '',     # todo: 我们四个人每个人的密码不一样怎么办？
         'HOST': 'localhost',
         'PORT': '3306',
         'OPTIONS': {'charset': 'utf8mb4'},
