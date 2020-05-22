@@ -1,7 +1,8 @@
 .idea
 __pycache__/
-frontend/*
-!frontend/dist
+node_modules
+migrations
+
 *.py[cod]
 *$py.class
 
