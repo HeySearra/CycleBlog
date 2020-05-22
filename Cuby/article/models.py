@@ -42,6 +42,3 @@ class Article(models.Model):
     tags = models.ManyToManyField(Tag, related_name='article_tag')
     who_like = models.ManyToManyField('user.User', verbose_name='like_person')  # 被谁点赞
     collection = models.ManyToManyField(Collection)     # 被谁收藏
-
-
-
