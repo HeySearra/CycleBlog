@@ -63,4 +63,11 @@ class User(models.Model):
     birthday = models.DateField(blank=True, verbose_name='生日')
     followings = models.ManyToManyField(blank=True, to='self')
     followers = models.ManyToManyField(blank=True, to='self')
+    point = models.IntegerField(verbose_name='积分', default=0)
 
+
+class Detail(models.Model):
+    point = models.IntegerField(verbose_name="积分变动", default=0)
+    reason = models.CharField(verbose_name="理由", max_length=256)
+    time = models.DateTimeField(verbose_name="时间", auto_now_add=True)
+    owner = models.ForeignKey('user.User', on_delete=models.CASCADE)
