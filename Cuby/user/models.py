@@ -45,6 +45,8 @@ class User(models.Model):
             all(c.isprintable() for c in nm)
         ])
     )])
+    profile_photo = models.FileField(blank=True, verbose_name='头像', upload_to='img/profile_photo',
+                                     default='img/profile_photo/default_handsome.jpg')
     
     # mini
     gender = models.CharField(blank=True, verbose_name='性别', max_length=MINI_MAX_LEN, choices=gender_chs, default='unknown')
@@ -56,12 +58,9 @@ class User(models.Model):
     organization = models.CharField(blank=True, verbose_name='公司或学校', max_length=INTRO_MAX_LEN)
     
     # others
+    create_time = models.DateTimeField(blank=True, verbose_name='创建时间', auto_now_add=True)
     blocked = models.BooleanField(blank=True, verbose_name='被封禁', default=False)
     birthday = models.DateField(blank=True, verbose_name='生日')
-    favourite_articles = models.ManyToManyField(blank=True, to='article.Article')  # todo: ManyToManyField是null=True还是blank=True？
-    favourite_resources = models.ManyToManyField(blank=True, to='resource.Resource')
     followings = models.ManyToManyField(blank=True, to='self')
     followers = models.ManyToManyField(blank=True, to='self')
-    create_dtime = models.DateTimeField(blank=True, verbose_name='创建时间', auto_now_add=True)
-    profile_photo = models.FileField(blank=True, verbose_name='头像', upload_to='img/profile_photo',
-                                     default='img/profile_photo/default_handsome.jpg')
+

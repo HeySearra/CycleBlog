@@ -25,7 +25,19 @@ class Comment(models.Model):
     fa_resources = models.ForeignKey(null=True, to=Resource, related_name="comment_article", on_delete=models.CASCADE)
     content = models.CharField(verbose_name="内容", max_length=512)
     likes = models.IntegerField(blank=True, verbose_name="点赞量", default=0)
-    stars = models.IntegerField(blank=True, verbose_name="收藏量", default=0)  # 评论被收藏？
-    blocked = models.BooleanField(blank=True, verbose_name='被封禁', default=False)
+    blocked = models.BooleanField(verbose_name='被封禁', default=False)
 
     who_like = models.ManyToManyField('user.User', verbose_name='like_person')
+
+
+class Message(models.Model):
+    # 它的功能是举报
+    content = models.CharField(verbose_name="举报理由", max_length=512)
+    owner = models.ForeignKey('user.User', verbose_name="举报者", on_delete=models.CASCADE)
+    handler = models.ForeignKey('user.User', verbose_name="处理者", on_delete=models.CASCADE)
+    article = models.ForeignKey('article.Article', null=True, on_delete=models.CASCADE)
+    resource = models.ForeignKey('resource.Resource', null=True, on_delete=models.CASCADE)
+    comment = models.ForeignKey('resource.Comment', null=True, on_delete=models.CASCADE)
+    user = models.ForeignKey('user.User', null=True, on_delete=models.CASCADE)
+
+    condition = models.BooleanField(verbose_name='被处理', default=False)
