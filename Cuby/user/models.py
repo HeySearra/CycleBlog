@@ -1,3 +1,4 @@
+from datetime import date, datetime
 from django.db import models
 from django.core.validators import validate_email
 
@@ -24,11 +25,28 @@ class User(models.Model):
     
     # basis
     # account = models.CharField(verbose_name='帐号', max_length=BASIS_MAX_LEN)  # todo: 超过max_length会怎么样？
-    email = models.EmailField(blank=True, verbose_name='邮箱', validators=[validate_email])
+    email = models.EmailField(unique=True, verbose_name='邮箱', validators=[validate_email])
     # telephone = models.CharField(blank=True, verbose_name='电话', max_length=BASIS_MAX_LEN, validators=[LambdaValidator(
     #     lambda tele: len(tele) == TELE_LEN and all(c.isnumeric() for c in tele)
     # )])
+    # password = models.CharField(verbose_name='密码', max_length=BASIS_MAX_LEN, validators=[LambdaValidator(
+    #     lambda pwd: all([
+    #         6 <= len(pwd) <= 32,
+    #         all(ord('!') <= ord(c) <= ord('~') for c in pwd),
+    #         any(c.isupper() for c in pwd)
+    #         + any(c.islower() for c in pwd)
+    #         + any(c.isnumeric() for c in pwd)
+    #         + any(not c.isalnum() for c in pwd)
+    #         >= 2
+    #     ]),
+    # )])
     password = models.CharField(verbose_name='密码', max_length=BASIS_MAX_LEN)
+    # name = models.CharField(verbose_name='姓名', max_length=BASIS_MAX_LEN, validators=[LambdaValidator(
+    #     lambda nm: all([
+    #         0 < len(nm) <= 32,
+    #         all(c.isprintable() for c in nm)
+    #     ])
+    # )])
     name = models.CharField(verbose_name='姓名', max_length=BASIS_MAX_LEN)
     
     # mini
@@ -43,13 +61,15 @@ class User(models.Model):
     # others
     create_time = models.DateTimeField(blank=True, verbose_name='创建时间', auto_now_add=True)
     blocked = models.BooleanField(blank=True, verbose_name='被封禁', default=False)
-    birthday = models.DateField(blank=True, verbose_name='生日')
+    birthday = models.DateField(blank=True, verbose_name='生日', default=date(2020, 1, 1))
     filesize = models.IntegerField(blank=True, verbose_name='上传资源总大小')
     favourite_articles = models.ManyToManyField(blank=True, to='article.Article')  # todo: ManyToManyField是null=True还是blank=True？
     favourite_resources = models.ManyToManyField(blank=True, to='resource.Resource')
     followings = models.ManyToManyField(blank=True, to='self')
     followers = models.ManyToManyField(blank=True, to='self')
     point = models.IntegerField(verbose_name='积分', default=0)
+    profile_photo = models.FileField(blank=True, verbose_name='头像', upload_to='img/profile_photo',
+                                     default='img/profile_photo/default_handsome.jpg')
 
 
 class Detail(models.Model):
@@ -57,3 +77,4 @@ class Detail(models.Model):
     reason = models.CharField(verbose_name="理由", max_length=256)
     time = models.DateTimeField(verbose_name="时间", auto_now_add=True)
     owner = models.ForeignKey('user.User', on_delete=models.CASCADE)
+
