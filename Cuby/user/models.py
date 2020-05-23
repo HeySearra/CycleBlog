@@ -28,25 +28,8 @@ class User(models.Model):
     # telephone = models.CharField(blank=True, verbose_name='电话', max_length=BASIS_MAX_LEN, validators=[LambdaValidator(
     #     lambda tele: len(tele) == TELE_LEN and all(c.isnumeric() for c in tele)
     # )])
-    password = models.CharField(verbose_name='密码', max_length=BASIS_MAX_LEN, validators=[LambdaValidator(
-        lambda pwd: all([
-            6 <= len(pwd) <= 32,
-            all(ord('!') <= ord(c) <= ord('~') for c in pwd),
-            any(c.isupper() for c in pwd)
-            + any(c.islower() for c in pwd)
-            + any(c.isnumeric() for c in pwd)
-            + any(not c.isalnum() for c in pwd)
-            >= 2
-        ]),
-    )])
-    name = models.CharField(verbose_name='姓名', max_length=BASIS_MAX_LEN, validators=[LambdaValidator(
-        lambda nm: all([
-            0 < len(nm) <= 32,
-            all(c.isprintable() for c in nm)
-        ])
-    )])
-    profile_photo = models.FileField(blank=True, verbose_name='头像', upload_to='img/profile_photo',
-                                     default='img/profile_photo/default_handsome.jpg')
+    password = models.CharField(verbose_name='密码', max_length=BASIS_MAX_LEN)
+    name = models.CharField(verbose_name='姓名', max_length=BASIS_MAX_LEN)
     
     # mini
     gender = models.CharField(blank=True, verbose_name='性别', max_length=MINI_MAX_LEN, choices=gender_chs, default='unknown')
@@ -61,6 +44,9 @@ class User(models.Model):
     create_time = models.DateTimeField(blank=True, verbose_name='创建时间', auto_now_add=True)
     blocked = models.BooleanField(blank=True, verbose_name='被封禁', default=False)
     birthday = models.DateField(blank=True, verbose_name='生日')
+    filesize = models.IntegerField(blank=True, verbose_name='上传资源总大小')
+    favourite_articles = models.ManyToManyField(blank=True, to='article.Article')  # todo: ManyToManyField是null=True还是blank=True？
+    favourite_resources = models.ManyToManyField(blank=True, to='resource.Resource')
     followings = models.ManyToManyField(blank=True, to='self')
     followers = models.ManyToManyField(blank=True, to='self')
     point = models.IntegerField(verbose_name='积分', default=0)
