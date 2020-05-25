@@ -1,5 +1,6 @@
 from user.models import User
 
+
 class UserInfoJson:
     def __init__(self, user=User()):
         self.name = user.name
@@ -8,7 +9,7 @@ class UserInfoJson:
         self.organization = user.organization
         self.job = user.position
         self.introduction = user.intro
-
+    
     def pack(self):
         package = {
             'name': self.name,
