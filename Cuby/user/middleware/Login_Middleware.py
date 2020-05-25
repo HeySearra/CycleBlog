@@ -14,6 +14,7 @@ class IsLogin(MiddlewareMixin):
     ]
 
     login = [
+        '/',
         '/simple_user_info',
         '/article_view_card',
         '/register/submit',

@@ -56,22 +56,23 @@ class Register(View):
 class Login(View):  # todo: 石墨上没有参数
     expected_keys = {'email', 'password'}
     status_map = {''}
-    
+
     def post(self, request):
         if request.session.get('is_login', None):
+            print("ddddd")
             return JsonResponse({'status': 0, 'wrong_msg': ''})
         kwargs: dict = json.loads(request.body)
         if kwargs.keys() != self.expected_keys:
             return JsonResponse(msg_dict.missing)
-        
+
         try:
-            user = User.objects.get(email=kwargs.email)
+            user = User.objects.get(email=kwargs['email'])
             if user.blocked == False:
-                if user.password == kwargs.password and (user.wrong_count < 5 or user.login_time.strftime('%Y%m%d') != timezone.now().strftime('%Y%m%d')):
+                if user.password == kwargs['password'] and (user.wrong_count < 5 or user.login_time.strftime('%Y%m%d') != timezone.now().strftime('%Y%m%d')):
                     request.session['is_login'] = True
                     request.session['uid'] = user.id
                     request.session['name'] = user.name
-                    if (user.vip_time <= timezone.now()):
+                    if(user.vip_time.__le__(timezone.now())):
                         user.identity = 'user'
                     else:
                         user.identity = 'vip'
@@ -82,7 +83,7 @@ class Login(View):  # todo: 石墨上没有参数
                     return JsonResponse({'count': 0, 'status': 0, 'wrong_msg': ''})
                 else:
                     if user.login_time.strftime('%Y%m%d') == timezone.now().strftime('%Y%m%d'):
-                        if (user.wrong_count >= 5):
+                        if(user.wrong_count >= 5):
                             return JsonResponse({'count': user.wrong_count + 1, 'status': 3, 'wrong_msg': '今天已输错' + (str)(user.wrong_count + 1) + '次密码，请明天再试'})
                     else:
                         user.wrong_count = 1
@@ -92,7 +93,7 @@ class Login(View):  # todo: 石墨上没有参数
                 return JsonResponse({'count': 0, 'status': 4, 'wrong_msg': '您已被封号'})
         except:
             return JsonResponse({'status': 2, 'wrong_msg': '用户不存在'})
-    
+
     def get(self, request):
         if request.session.get('is_login', None):
             request.session.flush()
@@ -106,8 +107,8 @@ class Member(View):
         kwargs: dict = json.loads(request.body)
         if kwargs.keys() != {'time'}:
             return JsonResponse(msg_dict.missing)
-        
-        try:  # Todo:打钱？
+
+        try:    # Todo:打钱？
             user = User.objects.get(id=request.session['uid'])
             if user.vip_time <= timezone.now():
                 user.vip_time = AddYearOrMonth(timezone.now(), 0, kwargs.time)
@@ -121,7 +122,7 @@ class Member(View):
             return JsonResponse(msg_dict.success)
         except:
             return JsonResponse(msg_dict.unknown)
-    
+
     def get(self, request):
         try:
             user = User.objects.get(id=request.session['uid'])
@@ -140,10 +141,10 @@ class UserInfo(View):
         kwargs: dict = json.loads(request.body)
         if kwargs.keys() != {'name', 'sex', 'birthday', 'organization', 'job', 'introduction'}:
             return JsonResponse(msg_dict.missing)
-        
+
         try:
             user = User.objects.get(id=request.session['uid'])
-            user.name = kwargs.name  # Todo:printable字符检验？ @tky
+            user.name = kwargs.name     # Todo:printable字符检验？ @tky
             user.sex = kwargs.sex if kwargs.sex in ['0', '1', '2'] else '0'
             user.birthday = datetime.strptime(kwargs.birthday, "%Y-%m-%d")
             user.organization = kwargs.organization
@@ -153,7 +154,7 @@ class UserInfo(View):
             return JsonResponse(msg_dict.success)
         except:
             return JsonResponse(msg_dict.unknown)
-    
+
     def get(self, request):
         try:
             user = User.objects.get(id=request.session['uid'])
@@ -167,7 +168,7 @@ class UserAccount(View):
         kwargs: dict = json.loads(request.body)
         if kwargs.keys() != {'email', 'password'}:
             return JsonResponse(msg_dict.missing)
-        
+
         try:
             user = User.objects.get(id=request.session['uid'])
             User.objects.get(email=kwargs.email)
@@ -192,7 +193,7 @@ class UserPassword(View):
         kwargs: dict = json.loads(request.body)
         if kwargs.keys() != {'old_password', 'new_password'}:
             return JsonResponse(msg_dict.missing)
-        
+
         try:
             user = User.objects.get(id=request.session['uid'])
             if user.password == HashPassword(kwargs.old_password):
