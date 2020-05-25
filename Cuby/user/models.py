@@ -13,9 +13,9 @@ TELE_LEN = 11
 class User(models.Model):
     # choices
     gender_chs = (
-        ('unknown', '未知'),
-        ('male', '男'),
-        ('female', '女'),
+        ('0', '未知'),
+        ('1', '男'),
+        ('2', '女'),
     )
     identity_chs = (
         ('user', '普通用户'),
@@ -59,9 +59,13 @@ class User(models.Model):
     organization = models.CharField(blank=True, verbose_name='公司或学校', max_length=INTRO_MAX_LEN)
     
     # others
+    session_key = models.CharField(blank=True, max_length=256)
+    login_time = models.DateField(blank=True, verbose_name='最近登录时间', auto_now=True)
+    wrong_count = models.IntegerField(verbose_name='最近一天密码错误次数', default=0)
+    vip_time = models.DateField(verbose_name='会员到期时间', auto_now_add=True)
     create_time = models.DateTimeField(blank=True, verbose_name='创建时间', auto_now_add=True)
     blocked = models.BooleanField(blank=True, verbose_name='被封禁', default=False)
-    birthday = models.DateField(blank=True, verbose_name='生日', default=date(2020, 1, 1))
+    birthday = models.DateField(blank=True, verbose_name='生日', default=date(1900, 1, 1))
     filesize = models.IntegerField(blank=True, verbose_name='上传资源总大小')
     favourite_articles = models.ManyToManyField(blank=True, to='article.Article')  # todo: ManyToManyField是null=True还是blank=True？
     favourite_resources = models.ManyToManyField(blank=True, to='resource.Resource')

@@ -57,6 +57,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'user.middleware.Login_Middleware.IsLogin',
 ]
 # 增加跨域忽略
 CORS_ORIGIN_ALLOW_ALL = True
