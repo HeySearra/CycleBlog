@@ -66,9 +66,7 @@ class User(models.Model):
     create_time = models.DateTimeField(blank=True, verbose_name='创建时间', auto_now_add=True)
     blocked = models.BooleanField(blank=True, verbose_name='被封禁', default=False)
     birthday = models.DateField(blank=True, verbose_name='生日', default=date(1900, 1, 1))
-    filesize = models.IntegerField(blank=True, verbose_name='上传资源总大小')
-    favourite_articles = models.ManyToManyField(blank=True, to='article.Article')  # todo: ManyToManyField是null=True还是blank=True？
-    favourite_resources = models.ManyToManyField(blank=True, to='resource.Resource')
+    filesize = models.IntegerField(blank=True, verbose_name='上传资源总大小', default=0)
     followings = models.ManyToManyField(blank=True, to='self')
     followers = models.ManyToManyField(blank=True, to='self')
     point = models.IntegerField(verbose_name='积分', default=0)

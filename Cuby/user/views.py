@@ -23,22 +23,22 @@ def AddYearOrMonth(startDate, year, month):
 
 def ValidEmail(email):
     # Todo:@tky
-    return True or False
+    return True
 
 
 def ValidName(name):
     # Todo:@tky
-    return
+    return True
 
 
 def ValidPassword(pwd):
     # Todo:@tky
-    return
+    return True
 
 
 def HashPassword(pwd):
     # Todo:@tky
-    return (str)('')
+    return (str)(pwd)
 
 
 class Register(View):
@@ -47,17 +47,21 @@ class Register(View):
         if kwargs.keys() != {'email', 'password', 'name'}:
             return JsonResponse(msg_dict.missing)
 
+        print(kwargs)
         # Todo:检验密码、昵称的合法性，email发送验证消息
-        if not ValidEmail(kwargs.email):
+        if not ValidEmail(kwargs['email']):
             return JsonResponse({'status': 2, 'wrong_msg': '账号邮箱不合法'})
-        if not ValidName(kwargs.name):  # 哈，printable字符考到我了
+        if not ValidName(kwargs['name']):  # 哈，printable字符考到我了
             return JsonResponse({'status': 4, 'wrong_msg': '昵称不合法（1-32个字符，仅限printable字符）'})
-        if not ValidPassword(kwargs.password):
+        if not ValidPassword(kwargs['password']):
             return JsonResponse({'status': 3, 'wrong_msg': '密码不合法（6-32个字符，仅限ascii值为[33, 126]的字符；需要数字、小写字母、大写字母、特殊字符至少其二）'})
-        if User.objects.filter(email=kwargs.email).exist():
+        if User.objects.filter(email=kwargs['email']).exists():
             return JsonResponse({'status': 2, 'wrong_msg': '账号已存在'})
-        u = User(kwargs)
-        u.password = HashPassword(kwargs.password)
+        u = User()
+        u.email = kwargs['email']
+        u.password = kwargs['password']
+        u.name = kwargs['name']
+        u.password = HashPassword(kwargs['password'])
         u.check()
         u.save()
         return JsonResponse({'status': 0, 'wrong_msg': ''})
@@ -69,19 +73,20 @@ class Login(View):  # todo: 石墨上没有参数
 
     def post(self, request):
         if request.session.get('is_login', None):
+            print("ddddd")
             return JsonResponse({'status': 0, 'wrong_msg': ''})
         kwargs: dict = json.loads(request.body)
         if kwargs.keys() != self.expected_keys:
             return JsonResponse(msg_dict.missing)
 
         try:
-            user = User.objects.get(email=kwargs.email)
+            user = User.objects.get(email=kwargs['email'])
             if user.blocked == False:
-                if user.password == kwargs.password and (user.wrong_count < 5 or user.login_time.strftime('%Y%m%d') != timezone.now().strftime('%Y%m%d')):
+                if user.password == kwargs['password'] and (user.wrong_count < 5 or user.login_time.strftime('%Y%m%d') != timezone.now().strftime('%Y%m%d')):
                     request.session['is_login'] = True
                     request.session['uid'] = user.id
                     request.session['name'] = user.name
-                    if(user.vip_time <= timezone.now()):
+                    if(user.vip_time.__le__(timezone.now())):
                         user.identity = 'user'
                     else:
                         user.identity = 'vip'
