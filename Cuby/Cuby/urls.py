@@ -27,8 +27,8 @@ urlpatterns = [
     path('login/submit', Login.as_view(), name='login'),
     path('member/apply/', Member.as_view(), name='vip'),
     path('user/', include([
-        path('change_account/', UserAccount.as_view(), name='user_account'),
-        path('change_password/', UserPassword.as_view(), name='user_password'),
+        path('change_account/', ChangeAccount.as_view(), name='user_account'),
+        path('change_password/', ChangePassword.as_view(), name='user_password'),
     ])),
     path('create/resource/upload_limit', GetUploadLimit.as_view(), name='upload_limit'),
     path('create/resource/upload_file', UploadFile.as_view(), name='uploadfile'),
