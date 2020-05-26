@@ -3,23 +3,12 @@ import json
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
 from easydict import EasyDict
-from django.http import JsonResponse
 from django.views import View
-from user.models import User
-from user.hypers import *
-from utils.jsonpack import UserInfoJson
-from utils.response import dict_jsr, JSR
 from django.db.utils import IntegrityError, DataError
 
-
-def AddYearOrMonth(startDate, year, month):
-    y = startDate.year + (month / 12) + year
-    m = startDate.month + (month % 12)
-    if m > 12:
-        m %= 12
-        y += 1
-    d2 = datetime.strptime('%d-%02d-%02d' % (y, m, startDate.day), "%Y-%m-%d")
-    return d2
+from user.models import User
+from user.hypers import *
+from utils.response import JSR
 
 
 class Register(View):
@@ -27,11 +16,11 @@ class Register(View):
     def post(self, request):
         E = EasyDict()
         E.uk = -1
-        E.key, E.acc, E.pwd, E.name, E.uni = 1, 2, 3, 4, 5
+        E.acc, E.pwd, E.name, E.uni = 1, 2, 3, 4
         
         kwargs: dict = json.loads(request.body)
         if kwargs.keys() != {'account', 'password', 'name'}:
-            return E.key
+            return E.uk
         if not CHECK_ACC(kwargs['account']):
             return E.acc
         if not CHECK_PWD(kwargs['password']):
@@ -42,13 +31,13 @@ class Register(View):
         kwargs.update({'email' if '@' in kwargs['account'] else 'tel': kwargs['account']})
         kwargs.pop('account')
         
-        u = User(kwargs)
+        u = User(**kwargs)
         try:
             u.save()
         except IntegrityError:
-            return E.uni    # 字段unique未满足
+            return E.uni  # 字段unique未满足
         except DataError:
-            return E.uk     # 诸如某个CharField超过了max_len的错误
+            return E.uk  # 诸如某个CharField超过了max_len的错误
         except:
             return E.uk
         return 0
@@ -62,17 +51,17 @@ class Login(View):
         
         E = EasyDict()
         E.uk = -1
-        E.key, E.exist, E.pwd, E.max_wrong, E.block = 1, 2, 3, 4, 5
+        E.exist, E.pwd, E.max_wrong, E.block = 1, 2, 3, 4
         kwargs: dict = json.loads(request.body)
         if kwargs.keys() != {'account', 'password'}:
-            return 0, E.key
+            return 0, E.uk
         
         u = (User.objects.filter(email=kwargs['account']) if '@' in kwargs['account']
              else User.objects.filter(tel=kwargs['account']))
         if not u.exists():
             return 0, E.exist
         u = u.get()
-
+        
         if u.login_date != date.today():
             u.login_date = date.today()
             u.wrong_count = 0
@@ -80,7 +69,7 @@ class Login(View):
                 u.save()
             except:
                 return u.wrong_count, E.uk
-
+        
         if u.blocked:
             return u.wrong_count, E.block
         
@@ -118,12 +107,12 @@ class Member(View):
     def post(self, request):
         E = EasyDict()
         E.uk = -1
-        E.key, E.exist = 1, 2
-
+        E.exist = 1
+        
         kwargs: dict = json.loads(request.body)
         if kwargs.keys() != {'time'}:
-            return E.key
-
+            return E.uk
+        
         u = User.objects.filter(id=request.session['uid'])
         if not u.exists():
             return E.exist
@@ -156,73 +145,110 @@ class Member(View):
 
 
 class UserInfo(View):
+    @JSR('status')
     def post(self, request):
+        E = EasyDict()
+        E.uk = -1
+        E.name, E.org, E.job, E.intro = 1, 2, 3, 4
+        
         kwargs: dict = json.loads(request.body)
         if kwargs.keys() != {'name', 'sex', 'birthday', 'organization', 'job', 'introduction'}:
-            return JsonResponse(msg_dict.missing)
+            return E.uk
+        
+        u = User.objects.filter(id=request.session['uid'])
+        if not u.exists():
+            return E.uk
+        u = u.get()
+        
+        if not CHECK_NAME(kwargs['name']):
+            return E.name
+        if str(kwargs['sex']) not in GENDER_DICT.keys():
+            return E.uk
+        if not CHECK_DESCS(kwargs['organization']):
+            return E.org
+        if not CHECK_DESCS(kwargs['job']):
+            return E.job
+        if not CHECK_DESCS(kwargs['introduction']):
+            return E.intro
+        
+        u.name = kwargs['name']
+        u.sex = GENDER_DICT[str(kwargs['sex'])]
+        u.birthday = datetime.strptime(kwargs['birthday'], '%Y-%m-%d').date()
+        u.organization = kwargs['organization']
+        u.job = kwargs['job']
+        u.intro = kwargs['introduction']
         
         try:
-            user = User.objects.get(id=request.session['uid'])
-            user.name = kwargs.name  # Todo:printable字符检验？ @tky
-            user.sex = kwargs.sex if kwargs.sex in ['0', '1', '2'] else '0'
-            user.birthday = datetime.strptime(kwargs.birthday, "%Y-%m-%d")
-            user.organization = kwargs.organization
-            user.job = kwargs.job
-            user.intro = kwargs.introduction
-            user.save()
-            return JsonResponse(msg_dict.success)
+            u.save()
         except:
-            return JsonResponse(msg_dict.unknown)
+            return E.uk
+        return 0
     
+    @JSR('name', 'sex', 'birthday', 'organization', 'job', 'introduction')
     def get(self, request):
-        try:
-            user = User.objects.get(id=request.session['uid'])
-            return JsonResponse(UserInfoJson(user).pack())
-        except:
-            return JsonResponse({})
+        u = User.objects.filter(id=request.session['uid'])
+        if not u.exists():
+            return tuple([''] * 6)
+        u = u.get()
+        return u.name, u.gender, u.birthday.strftime('%Y-%m-%d'), u.organization, u.job, u.intro
 
 
-class UserAccount(View):
+class ChangeAccount(View):
+    @JSR('status')
     def post(self, request):
+        E = EasyDict()
+        E.uk = -1
+        E.pwd, E.acc, E.exist = 1, 2, 3
         kwargs: dict = json.loads(request.body)
-        if kwargs.keys() != {'email', 'password'}:
-            return JsonResponse(msg_dict.missing)
+        if kwargs.keys() != {'account', 'password'}:
+            return E.uk
         
+        u = User.objects.filter(id=request.session['uid'])
+        if not u.exists():
+            return E.uk
+        u = u.get()
+
+        if not CHECK_ACC(kwargs['account']):
+            return E.acc
+        if u.password != kwargs['password']:
+            return E.pwd
+        
+        attr = 'email' if '@' in kwargs['account'] else 'tel'
+        if User.objects.filter(**{attr: kwargs['account']}).exists():
+            return E.exist
+        setattr(u, attr, kwargs['account'])
         try:
-            user = User.objects.get(id=request.session['uid'])
-            User.objects.get(email=kwargs.email)
-            if ValidEmail(kwargs.email) and not User.objects.filter(email=kwargs.email).exists():
-                if user.password == HashPassword(kwargs.password):
-                    # Todo:邮箱验证
-                    user.email = kwargs.email
-                    user.save()
-                    return JsonResponse(msg_dict.success)
-                else:
-                    return JsonResponse({'status': 1, 'wrong_msg': '密码错误'})
-            elif User.objects.filter(email=kwargs.email).exists():
-                return JsonResponse({'status': 3, 'wrong_msg': '账号已存在'})
-            else:
-                return JsonResponse({'status': 2, 'wrong_msg': '账号非法'})
+            u.save()
         except:
-            return JsonResponse(msg_dict.unknown)
+            return E.uk
+        return 0
 
 
-class UserPassword(View):
+class ChangePassword(View):
+    @JSR('status')
     def post(self, request):
+        E = EasyDict()
+        E.uk = -1
+        E.wr_pwd, E.same_pwd, E.ill_pwd = 1, 2, 3
         kwargs: dict = json.loads(request.body)
         if kwargs.keys() != {'old_password', 'new_password'}:
-            return JsonResponse(msg_dict.missing)
+            return E.uk
+
+        u = User.objects.filter(id=request.session['uid'])
+        if not u.exists():
+            return E.uk
+        u = u.get()
+    
+        if kwargs['old_password'] != u.password:
+            return E.wr_pwd
+        if kwargs['old_password'] == kwargs['new_password']:
+            return E.same_pwd
+        if not CHECK_PWD(kwargs['new_password']):
+            return E.ill_pwd
         
+        u.password = kwargs['new_password']
         try:
-            user = User.objects.get(id=request.session['uid'])
-            if user.password == HashPassword(kwargs.old_password):
-                if ValidPassword(kwargs.new_password):
-                    user.password = kwargs.password
-                    user.save()
-                    return JsonResponse(msg_dict.success)
-                else:
-                    return JsonResponse({'status': 3, 'wrong_msg': '新密码不合法'})
-            else:
-                return JsonResponse({'status': 1, 'wrong_msg': '旧密码错误'})
+            u.save()
         except:
-            return JsonResponse(msg_dict.unknown)
+            return E.uk
+        return 0
