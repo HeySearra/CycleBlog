@@ -4,7 +4,10 @@ from django.http import JsonResponse
 def JSR(*keys):
     def decorator(request):
         def wrapper(*args, **kw):
-            values = list(request(*args, **kw))
+            ret = request(*args, **kw)
+            if isinstance(ret, int):
+                ret = [ret]
+            values = list(ret)
             [values.append('') for _ in range(len(keys) - len(values))]
             return JsonResponse(dict(zip(keys, values)))
         return wrapper
