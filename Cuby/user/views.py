@@ -1,14 +1,14 @@
 import json
 
-from django.utils import timezone
-from datetime import datetime
+from datetime import datetime, date
+from dateutil.relativedelta import relativedelta
 from easydict import EasyDict
 from django.http import JsonResponse
 from django.views import View
 from user.models import User
 from user.hypers import *
 from utils.jsonpack import UserInfoJson
-from utils.response import single_value_jsr
+from utils.response import dict_jsr, JSR
 from django.db.utils import IntegrityError, DataError
 
 
@@ -23,11 +23,11 @@ def AddYearOrMonth(startDate, year, month):
 
 
 class Register(View):
-    @single_value_jsr
+    @JSR('status')
     def post(self, request):
         E = EasyDict()
         E.uk = -1
-        E.key, E.acc, E.pwd, E.name, E.uni = tuple(range(1, 5+1))
+        E.key, E.acc, E.pwd, E.name, E.uni = 1, 2, 3, 4, 5
         
         kwargs: dict = json.loads(request.body)
         if kwargs.keys() != {'account', 'password', 'name'}:
@@ -49,91 +49,111 @@ class Register(View):
             return E.uni    # 字段unique未满足
         except DataError:
             return E.uk     # 诸如某个CharField超过了max_len的错误
-        except
+        except:
+            return E.uk
         return 0
 
 
-class Login(View):  # todo: 石墨上没有参数
-    expected_keys = {'email', 'password'}
-    status_map = {''}
-
+class Login(View):
+    @JSR('count', 'status')
     def post(self, request):
         if request.session.get('is_login', None):
-            print("ddddd")
-            return JsonResponse({'status': 0, 'wrong_msg': ''})
+            return 0, 0
+        
+        E = EasyDict()
+        E.uk = -1
+        E.key, E.exist, E.pwd, E.max_wrong, E.block = 1, 2, 3, 4, 5
         kwargs: dict = json.loads(request.body)
-        if kwargs.keys() != self.expected_keys:
-            return JsonResponse(msg_dict.missing)
+        if kwargs.keys() != {'account', 'password'}:
+            return 0, E.key
+        
+        u = (User.objects.filter(email=kwargs['account']) if '@' in kwargs['account']
+             else User.objects.filter(tel=kwargs['account']))
+        if not u.exists():
+            return 0, E.exist
+        u = u.get()
 
+        if u.login_date != date.today():
+            u.login_date = date.today()
+            u.wrong_count = 0
+            try:
+                u.save()
+            except:
+                return u.wrong_count, E.uk
+
+        if u.blocked:
+            return u.wrong_count, E.block
+        
+        if u.wrong_count == MAX_WRONG_PWD:
+            return u.wrong_count, E.max_wrong
+        
+        if u.password != kwargs['password']:
+            u.wrong_count += 1
+            return u.wrong_count, E.pwd
+        
+        u.verify_vip()
+        request.session['is_login'] = True
+        request.session['uid'] = u.id
+        request.session['name'] = u.name
+        request.session['identity'] = u.identity
+        request.session.save()
+        u.session_key = request.session.session_key
         try:
-            user = User.objects.get(email=kwargs['email'])
-            if user.blocked == False:
-                if user.password == kwargs['password'] and (user.wrong_count < 5 or user.login_time.strftime('%Y%m%d') != timezone.now().strftime('%Y%m%d')):
-                    request.session['is_login'] = True
-                    request.session['uid'] = user.id
-                    request.session['name'] = user.name
-                    if(user.vip_time.__le__(timezone.now())):
-                        user.identity = 'user'
-                    else:
-                        user.identity = 'vip'
-                    request.session['identity'] = user.identity
-                    request.session.save()
-                    user.session_key = request.session.session_key
-                    user.save()
-                    return JsonResponse({'count': 0, 'status': 0, 'wrong_msg': ''})
-                else:
-                    if user.login_time.strftime('%Y%m%d') == timezone.now().strftime('%Y%m%d'):
-                        if(user.wrong_count >= 5):
-                            return JsonResponse({'count': user.wrong_count + 1, 'status': 3, 'wrong_msg': '今天已输错' + (str)(user.wrong_count + 1) + '次密码，请明天再试'})
-                    else:
-                        user.wrong_count = 1
-                        user.save()
-                    return JsonResponse({'count': 1, 'status': 3, 'wrong_msg': '密码错误'})
-            else:
-                return JsonResponse({'count': 0, 'status': 4, 'wrong_msg': '您已被封号'})
+            u.save()
         except:
-            return JsonResponse({'status': 2, 'wrong_msg': '用户不存在'})
-
+            return u.wrong_count, E.uk
+        return u.wrong_count, 0
+    
+    @JSR('status')
     def get(self, request):
         if request.session.get('is_login', None):
             request.session.flush()
-            return JsonResponse(msg_dict.success)
+            return 0
         else:
-            return JsonResponse(msg_dict.unknown)
+            return -1
 
 
 class Member(View):
+    @JSR('status')
     def post(self, request):
+        E = EasyDict()
+        E.uk = -1
+        E.key, E.exist = 1, 2
+
         kwargs: dict = json.loads(request.body)
         if kwargs.keys() != {'time'}:
-            return JsonResponse(msg_dict.missing)
+            return E.key
 
-        try:    # Todo:打钱？
-            user = User.objects.get(id=request.session['uid'])
-            if user.vip_time <= timezone.now():
-                user.vip_time = AddYearOrMonth(timezone.now(), 0, kwargs.time)
-                user.identity = 'vip'
-                user.save()
-                request.session['identity'] = 'vip'
-                request.save()
-            else:
-                user.vip_time = AddYearOrMonth(user.vip_time, 0, kwargs.time)
-                user.save()
-            return JsonResponse(msg_dict.success)
-        except:
-            return JsonResponse(msg_dict.unknown)
-
-    def get(self, request):
+        u = User.objects.filter(id=request.session['uid'])
+        if not u.exists():
+            return E.exist
+        u = u.get()
+        
+        if u.vip_time < date.today():
+            u.vip_time = date.today()
+        u.vip_time = u.vip_time + relativedelta(months=int(kwargs['time']))
+        u.identity = 'vip'
         try:
-            user = User.objects.get(id=request.session['uid'])
-            if user.vip_time > timezone.now():
-                user.identity = 'user'
-                user.save()
-                return JsonResponse({'date': '', 'is_member': False})
-            else:
-                return JsonResponse({'date': user.vip_time.strftime("%Y-%m-%d"), 'is_member': True})
+            u.save()
         except:
-            return JsonResponse({'date': '', 'is_member': False})
+            return E.uk
+        request.session['identity'] = 'vip'
+        request.save()
+        return 0
+    
+    @JSR('date', 'is_member')
+    def get(self, request):
+        kwargs: dict = json.loads(request.body)
+        u = User.objects.filter(id=request.session['uid'])
+        if not u.exists():
+            return '', False
+        u = u.get()
+        is_vip = u.verify_vip()
+        try:
+            u.save()
+        except:
+            return '', False
+        return u.vip_date.strftime("%Y-%m-%d") if is_vip else '', is_vip
 
 
 class UserInfo(View):
@@ -141,10 +161,10 @@ class UserInfo(View):
         kwargs: dict = json.loads(request.body)
         if kwargs.keys() != {'name', 'sex', 'birthday', 'organization', 'job', 'introduction'}:
             return JsonResponse(msg_dict.missing)
-
+        
         try:
             user = User.objects.get(id=request.session['uid'])
-            user.name = kwargs.name     # Todo:printable字符检验？ @tky
+            user.name = kwargs.name  # Todo:printable字符检验？ @tky
             user.sex = kwargs.sex if kwargs.sex in ['0', '1', '2'] else '0'
             user.birthday = datetime.strptime(kwargs.birthday, "%Y-%m-%d")
             user.organization = kwargs.organization
@@ -154,7 +174,7 @@ class UserInfo(View):
             return JsonResponse(msg_dict.success)
         except:
             return JsonResponse(msg_dict.unknown)
-
+    
     def get(self, request):
         try:
             user = User.objects.get(id=request.session['uid'])
@@ -168,7 +188,7 @@ class UserAccount(View):
         kwargs: dict = json.loads(request.body)
         if kwargs.keys() != {'email', 'password'}:
             return JsonResponse(msg_dict.missing)
-
+        
         try:
             user = User.objects.get(id=request.session['uid'])
             User.objects.get(email=kwargs.email)
@@ -193,7 +213,7 @@ class UserPassword(View):
         kwargs: dict = json.loads(request.body)
         if kwargs.keys() != {'old_password', 'new_password'}:
             return JsonResponse(msg_dict.missing)
-
+        
         try:
             user = User.objects.get(id=request.session['uid'])
             if user.password == HashPassword(kwargs.old_password):

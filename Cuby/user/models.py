@@ -21,9 +21,9 @@ class User(models.Model):
     session_key = models.CharField(blank=True, verbose_name='session键', max_length=EXT_MAX_LEN, default='')
     
     # other fields
-    login_time = models.DateField(blank=True, verbose_name='最近登录时间', auto_now=True)
+    login_date = models.DateField(blank=True, verbose_name='最近登录时间', auto_now=True)
     wrong_count = models.IntegerField(blank=True, verbose_name='最近一天密码错误次数', default=0)
-    vip_time = models.DateField(blank=True, verbose_name='会员到期时间', default=date(1900, 1, 1))
+    vip_date = models.DateField(blank=True, verbose_name='会员到期时间', default=date(1900, 1, 1))
     create_time = models.DateTimeField(blank=True, verbose_name='创建时间', auto_now_add=True)
     blocked = models.BooleanField(blank=True, verbose_name='被封禁', default=False)
     birthday = models.DateField(blank=True, verbose_name='生日', default=date(1900, 1, 1))
@@ -36,6 +36,11 @@ class User(models.Model):
     profile_photo = models.FileField(blank=True, verbose_name='头像', upload_to='img/profile_photo',
                                      default='img/profile_photo/default_handsome.jpg')
 
+    def verify_vip(self) -> bool:
+        if self.vip_date < date.today():
+            self.identity = 'user'
+            self.save()
+        return self.identity == 'user'
 # class Detail(models.Model):
 #     point = models.IntegerField(verbose_name="积分变动", default=0)
 #     reason = models.CharField(verbose_name="理由", max_length=256)

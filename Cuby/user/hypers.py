@@ -17,6 +17,7 @@ MINI_MAX_LEN = 32
 BASIC_MAX_LEN = 64
 EXT_MAX_LEN = 256
 TEL_LEN = 11
+MAX_WRONG_PWD = 5
 
 # checker lambdas
 _EMAIL_REG = r'^[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+){0,4}@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+){0,4}$'
