@@ -143,7 +143,6 @@ class Member(View):
     
     @JSR('date', 'is_member')
     def get(self, request):
-        kwargs: dict = json.loads(request.body)
         u = User.objects.filter(id=request.session['uid'])
         if not u.exists():
             return '', False
