@@ -28,14 +28,11 @@ class User(models.Model):
     blocked = models.BooleanField(blank=True, verbose_name='被封禁', default=False)
     birthday = models.DateField(blank=True, verbose_name='生日', default=date(1900, 1, 1))
     filesize = models.IntegerField(blank=True, verbose_name='上传资源总大小', default=0)
-    favourite_articles = models.ManyToManyField(blank=True, to='article.Article')
-    favourite_resources = models.ManyToManyField(blank=True, to='resource.Resource')
     followings = models.ManyToManyField(blank=True, to='self')
     followers = models.ManyToManyField(blank=True, to='self')
     point = models.IntegerField(blank=True, verbose_name='积分', default=0)
     profile_photo = models.FileField(blank=True, verbose_name='头像', upload_to='img/profile_photo',
                                      default='img/profile_photo/default_handsome.jpg')
-    download = models.ManyToManyField('resource.Resource', verbose_name='download_res')  # 下载的资源
     
     def verify_vip(self) -> bool:
         if self.vip_date < date.today():

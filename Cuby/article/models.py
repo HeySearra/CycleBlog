@@ -19,16 +19,24 @@ class Collection(models.Model):
     name = models.CharField(verbose_name="收藏夹名", max_length=256, default='')
     totalnum = models.IntegerField(verbose_name="收藏内容数量", default=0)
     hide = models.BooleanField(verbose_name='是否隐藏', default=False)
-    articles = models.ManyToManyField('Article', verbose_name='收藏的文章')
-    resources = models.ManyToManyField('resource.Resource', verbose_name='收藏的资源')
     owner = models.ForeignKey('user.User', on_delete=models.CASCADE)
 
+    articles = models.ManyToManyField('Article', verbose_name='收藏的文章',  related_name='articles_in_collection', through='ArticleCollect')
+    resources = models.ManyToManyField('resource.Resource', verbose_name='收藏的资源', related_name='resources_in_collection', through='ResourceCollect')
 
-class Collect(models.Model):
-    user = models.ForeignKey('user.User', on_delete=models.CASCADE)
+
+class ArticleCollect(models.Model):
+    time = models.DateTimeField(verbose_name='收藏时间', auto_now_add=True)
+
+    user = models.ForeignKey('Collection', on_delete=models.CASCADE)
     article = models.ForeignKey('article.Article', on_delete=models.CASCADE)
+
+
+class ResourceCollect(models.Model):
+    time = models.DateTimeField(verbose_name='收藏时间', auto_now_add=True)
+
+    user = models.ForeignKey('Collection', on_delete=models.CASCADE)
     resource = models.ForeignKey('resource.Resource', on_delete=models.CASCADE)
-    time = models.TimeField(verbose_name='收藏时间', auto_now_add=True)
 
 
 class Article(models.Model):
@@ -49,4 +57,13 @@ class Article(models.Model):
     column = models.ForeignKey(Column, on_delete=models.CASCADE)
     tags = models.ManyToManyField(Tag, related_name='article_tag')
     who_like = models.ManyToManyField('user.User', verbose_name='like_person')  # 被谁点赞
-    collection = models.ManyToManyField(Collection)  # 被谁收藏
+
+
+class ArticleComment(models.Model):
+    content = models.CharField(verbose_name="内容", max_length=512, default='')
+    likes = models.IntegerField(blank=True, verbose_name="点赞量", default=0)
+    blocked = models.BooleanField(verbose_name='被封禁', default=False)
+
+    author = models.ForeignKey(null=True, to="user.User", related_name="article_comment_author", on_delete=models.CASCADE)
+    fa_article = models.ForeignKey(null=True, to="Article", related_name="comment_article", on_delete=models.CASCADE)
+    who_like = models.ManyToManyField('user.User', verbose_name='like_person')

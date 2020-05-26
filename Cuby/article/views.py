@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from django.views import View
 from django.shortcuts import render
 from django.db.models import Count, F, Q, Min
-from article.models import Article, Collection, Collect
+from article.models import Article, Collection, ArticleCollect
 from user.models import User
 from resource.models import Resource
 from utils.response import JSR
@@ -28,7 +28,7 @@ class GetCinfo(View):
     def get(self, request):
         kwargs: dict = json.loads(request.body)
         u = Collection.objects.filter(id=kwargs['cid']).get().owner.id
-        col = Collect.objects.filter(user=u).order_by('time')
+        col = ArticleCollect.objects.filter(user=u).order_by('time')
         num = len(col)
         col = col[(kwargs['page'] - 1) * kwargs['each']:kwargs['page'] * kwargs['each']]
         rid = []
