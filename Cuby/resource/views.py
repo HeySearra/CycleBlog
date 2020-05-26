@@ -22,7 +22,7 @@ class UploadFile(View):
         errc = EasyDict()
         errc.unknown = -1
         errc.toobig = 1
-        
+
         file = request.FILES.get("file", None)
         if not file:
             return '', errc.unknown, '获取文件失败'
@@ -59,7 +59,7 @@ class EditFileMessage(View):
         if kwargs.keys() != {'title', 'introduction', 'tags', 'points', 'src', 'rid'}:
             return errc.unknown, '参数错误'
         
-        if ~Resource.objects.filter(title=kwargs['title']).exist():
+        if not Resource.objects.filter(title=kwargs['title']).exist():
             return errc.notfound, '资源不在博客网站中'
         
         if kwargs['tags'] == '':
@@ -92,23 +92,28 @@ class GetResource(View):
 
 
 class GetDownload(View):
+    @JSR('rid', 'amount')
     def get(self, request):
         kwargs: dict = json.loads(request.body)
-        resource = User.download.filter(user=User.objects.filter(id=request.session['uid']))
+        resource = User.download.filter(user=User.objects.filter(id=request.session['uid']).get())
         num = len(resource)
         resource = resource[(kwargs['page'] - 1) * kwargs['each']:kwargs['page'] * kwargs['each']]
         rid = []
         for i in resource:
             rid.append(i.id)
 
-        return JsonResponse({'rid': rid, 'amount': num})
+        return rid, num
 
 
 class DelResource(View):
-    def Post(self, request):
+    @JSR('status', 'wrong_msg')
+    def post(self, request):
         kwargs: dict = json.loads(request.body)
+        if kwargs.keys() != {'rid'}:
+            return -1, '参数错误'
+
         if Resource.objects.filter(id=kwargs['rid']).exist():
             Resource.objects.filter(id=kwargs['rid']).delete()
-            return JsonResponse({'status': 0, 'wrong_msg': ''})
+            return 0, ''
         else:
-            return JsonResponse({'status': 1, 'wrong_msg': '没有该文件'})
+            return 1, '没有该文件'

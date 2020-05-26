@@ -18,6 +18,8 @@ from django.urls import path, re_path, include
 from django.views.generic import TemplateView
 from user.views import *
 from resource.views import GetUploadLimit, UploadFile, EditFileMessage, GetResource, GetDownload, DelResource
+from article.views import GetClist, GetCinfo, AddArticle, AddResource, RemoveArticle, RemoveResource, NewCollection, Rename, SetCondition, DelCollection, MoveArticle, MoveResource
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     # path('logout/submit/'),
@@ -103,5 +105,17 @@ urlpatterns = [
     path('create/resource/upload_list', GetResource.as_view(), name='get_resource'),
     path('create/resource/download_list', GetDownload.as_view(), name='get_download'),
     path('create/resource/delete', DelResource.as_view(), name='del_resource'),
+    path('collection/list', GetClist.as_view(), name='get_collection_list'),
+    path('collection/info', GetCinfo.as_view(), name='get_collection_info'),
+    path('collection/add_article', AddArticle.as_view(), name='add_article'),
+    path('collection/add_resource', AddResource.as_view(), name='add_resource'),
+    path('collection/remove_article', RemoveArticle.as_view(), name='remove_article'),
+    path('collection/remove_resource', RemoveResource.as_view(), name='remove_resource'),
+    path('collection/new', NewCollection.as_view(), name='new_collection'),
+    path('collection/rename', Rename.as_view(), name='rename_collection'),
+    path('collection/condition', SetCondition.as_view(), name='change_condition'),
+    path('collection/delete', DelCollection.as_view(), name='delete_collection'),
+    path('collection/move_article', MoveArticle.as_view(), name='move_article'),
+    path('collection/move_resource', MoveResource, name='move_resource'),
     re_path(r'.*', TemplateView.as_view(template_name='index.html')),
 ]
