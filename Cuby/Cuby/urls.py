@@ -23,15 +23,12 @@ from article.views import GetClist, GetCinfo, AddArticle, AddResource, RemoveArt
 urlpatterns = [
     path('admin/', admin.site.urls),
     # 他本来就是从完整的url了，前面加/会报warning
-    path('', TemplateView.as_view(template_name="index.html"), name='index'),
-    re_path(r'.*', TemplateView.as_view(template_name='index.html')),
     path('register/submit', Register.as_view(), name='register'),
     path('login/submit', Login.as_view(), name='login'),
     path('member/apply/', Member.as_view(), name='vip'),
     path('user/', include([
-        path('info/', UserInfo.as_view(), name='user_info'),
-        path('change_account/', ChangeAccount.as_view(), name='user_account'),
-        path('change_password/', ChangePassword.as_view(), name='user_password'),
+        path('change_account/', UserAccount.as_view(), name='user_account'),
+        path('change_password/', UserPassword.as_view(), name='user_password'),
     ])),
     path('create/resource/upload_limit', GetUploadLimit.as_view(), name='upload_limit'),
     path('create/resource/upload_file', UploadFile.as_view(), name='uploadfile'),
@@ -51,4 +48,6 @@ urlpatterns = [
     path('collection/delete', DelCollection.as_view(), name='delete_collection'),
     path('collection/move_article', MoveArticle.as_view(), name='move_article'),
     path('collection/move_resource', MoveResource, name='move_resource'),
+    path('', TemplateView.as_view(template_name="index.html"), name='index'),
+    re_path(r'.*', TemplateView.as_view(template_name='index.html')),
 ]
