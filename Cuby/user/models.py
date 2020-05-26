@@ -35,6 +35,7 @@ class User(models.Model):
     point = models.IntegerField(blank=True, verbose_name='积分', default=0)
     profile_photo = models.FileField(blank=True, verbose_name='头像', upload_to='img/profile_photo',
                                      default='img/profile_photo/default_handsome.jpg')
+    download = models.ManyToManyField('resource.Resource', verbose_name='download_res')  # 下载的资源
 
     def verify_vip(self) -> bool:
         if self.vip_date < date.today():

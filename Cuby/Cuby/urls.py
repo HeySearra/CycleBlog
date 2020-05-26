@@ -17,7 +17,7 @@ from django.contrib import admin
 from django.urls import path, re_path, include
 from django.views.generic import TemplateView
 from user.views import *
-from resource.views import GetUploadLimit, UploadFile, EditFileMessage, GetResource
+from resource.views import GetUploadLimit, UploadFile, EditFileMessage, GetResource, GetDownload, DelResource
 urlpatterns = [
     path('admin/', admin.site.urls),
     # path('logout/submit/'),
@@ -101,5 +101,7 @@ urlpatterns = [
     path('create/resource/upload_file', UploadFile.as_view(), name='uploadfile'),
     path('create/resource/new', EditFileMessage.as_view(), name='edit_file_message'),
     path('create/resource/upload_list', GetResource.as_view(), name='get_resource'),
+    path('create/resource/download_list', GetDownload.as_view(), name='get_download'),
+    path('create/resource/delete', DelResource.as_view(), name='del_resource'),
     re_path(r'.*', TemplateView.as_view(template_name='index.html')),
 ]
