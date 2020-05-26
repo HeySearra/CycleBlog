@@ -17,10 +17,18 @@ class Tag(models.Model):
 
 class Collection(models.Model):
     name = models.CharField(verbose_name="收藏夹名", max_length=256)
-    source_num = models.IntegerField(verbose_name="收藏内容数量", default=0)
-
+    totalnum = models.IntegerField(verbose_name="收藏内容数量", default=0)
+    hide = models.BooleanField(verbose_name='是否隐藏', default=False)
+    articles = models.ManyToManyField('Article', verbose_name='收藏的文章')
+    resources = models.ManyToManyField('resource.Resource', verbose_name='收藏的资源')
     owner = models.ForeignKey('user.User', on_delete=models.CASCADE)
 
+
+class Collect(models.Model):
+    user = models.ForeignKey('user.User', on_delete=models.CASCADE)
+    article = models.ForeignKey('article.Article', on_delete=models.CASCADE)
+    resource = models.ForeignKey('resource.Resource', on_delete=models.CASCADE)
+    time = models.TimeField(verbose_name='收藏时间', auto_now_add=True)
 
 class Article(models.Model):
     title = models.CharField(verbose_name="标题", max_length=256)

@@ -78,3 +78,25 @@ class GetResource(View):
 
         return JsonResponse({'rid': rid, 'amount': num})
 
+
+class GetDownload(View):
+    def get(self, request):
+        kwargs: dict = json.loads(request.body)
+        resource = User.download.filter(user=User.objects.filter(id=request.session['uid']))
+        num = len(resource)
+        resource = resource[(kwargs['page'] - 1) * kwargs['each']:kwargs['page'] * kwargs['each']]
+        rid = []
+        for i in resource:
+            rid.append(i.id)
+
+        return JsonResponse({'rid': rid, 'amount': num})
+
+
+class DelResource(View):
+    def Post(self, request):
+        kwargs: dict = json.loads(request.body)
+        if Resource.objects.filter(id=kwargs['rid']).exist():
+            Resource.objects.filter(id=kwargs['rid']).delete()
+            return JsonResponse({'status': 0, 'wrong_msg': ''})
+        else:
+            return JsonResponse({'status': 1, 'wrong_msg': '没有该文件'})
