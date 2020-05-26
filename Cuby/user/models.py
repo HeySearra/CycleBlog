@@ -1,24 +1,24 @@
-from datetime import date, datetime
+from datetime import date
 from django.db import models
 from user.hypers import *
 
 
 class User(models.Model):
     # basic fields
-    tel = models.CharField(null=True, unique=True, verbose_name='电话', max_length=BASIC_MAX_LEN)
-    email = models.EmailField(null=True, unique=True, verbose_name='邮箱', max_length=BASIC_MAX_LEN)
-    password = models.CharField(verbose_name='密码', max_length=BASIC_MAX_LEN)
-    name = models.CharField(verbose_name='姓名', max_length=BASIC_MAX_LEN)
+    tel = models.CharField(null=True, unique=True, verbose_name='电话', max_length=BASIC_DATA_MAX_LEN)
+    email = models.EmailField(null=True, unique=True, verbose_name='邮箱', max_length=BASIC_DATA_MAX_LEN)
+    password = models.CharField(verbose_name='密码', max_length=BASIC_DATA_MAX_LEN)
+    name = models.CharField(verbose_name='姓名', max_length=BASIC_DATA_MAX_LEN)
     
     # mini fields
-    gender = models.CharField(blank=True, verbose_name='性别', max_length=MINI_MAX_LEN, choices=GENDER_CHS, default='unknown')
-    identity = models.CharField(blank=True, verbose_name='身份', max_length=MINI_MAX_LEN, choices=IDENTITY_CHS, default='user')
+    gender = models.CharField(blank=True, verbose_name='性别', max_length=MINI_DATA_MAX_LEN, choices=GENDER_CHS, default='unknown')
+    identity = models.CharField(blank=True, verbose_name='身份', max_length=MINI_DATA_MAX_LEN, choices=IDENTITY_CHS, default='user')
     
     # extended fields
-    intro = models.CharField(blank=True, verbose_name='简介', max_length=EXT_MAX_LEN, default='')
-    position = models.CharField(blank=True, verbose_name='职位', max_length=EXT_MAX_LEN, default='')
-    organization = models.CharField(blank=True, verbose_name='公司或学校', max_length=EXT_MAX_LEN, default='')
-    session_key = models.CharField(blank=True, verbose_name='session键', max_length=EXT_MAX_LEN, default='')
+    intro = models.CharField(blank=True, verbose_name='简介', max_length=EXT_DATA_MAX_LEN, default='')
+    job = models.CharField(blank=True, verbose_name='职业', max_length=EXT_DATA_MAX_LEN, default='')
+    organization = models.CharField(blank=True, verbose_name='公司或学校', max_length=EXT_DATA_MAX_LEN, default='')
+    session_key = models.CharField(blank=True, verbose_name='session键', max_length=EXT_DATA_MAX_LEN, default='')
     
     # other fields
     login_date = models.DateField(blank=True, verbose_name='最近登录时间', auto_now=True)
