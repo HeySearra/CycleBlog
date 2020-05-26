@@ -3,6 +3,10 @@ __pycache__/
 node_modules
 migrations
 
+**/settings.py
 *.py[cod]
 *$py.class
+
+**/*.zip
+**/*.rar
 
