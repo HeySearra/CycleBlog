@@ -3,9 +3,9 @@ from django.db import models
 
 class Column(models.Model):
     title = models.CharField(verbose_name="专栏名称", max_length=256)
-    views = models.IntegerField(verbose_name="阅读量")     # 专栏下所有文章浏览量的和
+    views = models.IntegerField(verbose_name="阅读量")  # 专栏下所有文章浏览量的和
     article_num = models.IntegerField(verbose_name="文章数量")
-
+    
     owner = models.ForeignKey('user.User', on_delete=models.CASCADE)
 
 
@@ -30,6 +30,7 @@ class Collect(models.Model):
     resource = models.ForeignKey('resource.Resource', on_delete=models.CASCADE)
     time = models.TimeField(verbose_name='收藏时间', auto_now_add=True)
 
+
 class Article(models.Model):
     title = models.CharField(verbose_name="标题", max_length=256)
     abstract = models.CharField(verbose_name="摘要", max_length=256)
@@ -43,9 +44,9 @@ class Article(models.Model):
     recycle_time = models.DateTimeField(verbose_name="删除时间", null=True)
     blocked = models.BooleanField(blank=True, verbose_name='被封禁', default=False)
     recycled = models.BooleanField(blank=True, verbose_name='在回收站里', default=False)
-
+    
     author = models.ForeignKey('user.User', related_name="article_author", on_delete=models.CASCADE)
     column = models.ForeignKey(Column, on_delete=models.CASCADE)
     tags = models.ManyToManyField(Tag, related_name='article_tag')
     who_like = models.ManyToManyField('user.User', verbose_name='like_person')  # 被谁点赞
-    collection = models.ManyToManyField(Collection)     # 被谁收藏
+    collection = models.ManyToManyField(Collection)  # 被谁收藏

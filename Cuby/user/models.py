@@ -36,12 +36,14 @@ class User(models.Model):
     profile_photo = models.FileField(blank=True, verbose_name='头像', upload_to='img/profile_photo',
                                      default='img/profile_photo/default_handsome.jpg')
     download = models.ManyToManyField('resource.Resource', verbose_name='download_res')  # 下载的资源
-
+    
     def verify_vip(self) -> bool:
         if self.vip_date < date.today():
             self.identity = 'user'
             self.save()
         return self.identity == 'user'
+
+
 # class Detail(models.Model):
 #     point = models.IntegerField(verbose_name="积分变动", default=0)
 #     reason = models.CharField(verbose_name="理由", max_length=256)
