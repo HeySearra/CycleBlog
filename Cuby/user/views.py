@@ -184,13 +184,13 @@ class UserInfo(View):
             return E.uk
         return 0
     
-    @JSR('name', 'sex', 'birthday', 'organization', 'job', 'introduction')
+    @JSR('uid', 'name', 'sex', 'birthday', 'organization', 'job', 'introduction')
     def get(self, request):
         u = User.objects.filter(id=request.session['uid'])
         if not u.exists():
             return tuple([''] * 6)
         u = u.get()
-        return u.name, u.gender, u.birthday.strftime('%Y-%m-%d'), u.organization, u.job, u.intro
+        return u.id, u.name, u.gender, u.birthday.strftime('%Y-%m-%d'), u.organization, u.job, u.intro
 
 
 class ChangeAccount(View):
@@ -252,3 +252,81 @@ class ChangePassword(View):
         except:
             return E.uk
         return 0
+
+
+class FollowList(View):
+    @JSR('uid', 'amount')
+    def post(self, request):
+        kwargs: dict = json.loads(request.body)
+        if kwargs.keys() != {'page', 'each'}:
+            return [], 0
+
+        list = []
+        u = User.objects.filter(id=request.session['uid'])
+        if not u.exists():
+            return list, 0
+        u = u.get()
+
+        page = int(kwargs['page'])
+        each = int(kwargs['each'])
+        follow_set = u.followings.all()[(page - 1) * each: page * each]
+        for u in follow_set:
+            list.append(u.id)
+        return list, len(list)
+
+    @JSR('status')
+    def get(self, request):
+        # 关注或取关
+        kwargs: dict = json.loads(request.body)
+        if kwargs.keys() != {'uid', 'condition'}:
+            return -1
+
+        u = User.objects.filter(id=request.session['uid'])
+        if not u.exists():
+            return -1
+        u = u.get()
+
+        uf = User.objects.filter(id=int(kwargs['uid']))
+        if not uf.exists():
+            return 0
+
+        if u.followings.filter(id=int(kwargs['uid'])).exists():
+            u.followings.remove(uf)
+        else:
+            u.followings.add(uf)
+        return 0
+
+
+class FanList(View):
+    @JSR('uid', 'status')
+    def post(self, request):
+        kwargs: dict = json.loads(request.body)
+        if kwargs.keys() != {'page', 'each'}:
+            return [], 0
+
+        u = User.objects.filter(id=request.session['uid'])
+        if not u.exists():
+            return [], 0
+        u = u.get()
+
+        list = []
+        page = int(kwargs['page'])
+        each = int(kwargs['each'])
+        follow_set = u.followers.all()[(page - 1) * each: page * each]
+        for u in follow_set:
+            list.append(u.id)
+        return list, len(list)
+
+
+class DataFF(View):
+    @JSR('fans', 'followings')
+    def get(self, request):
+        kwargs: dict = json.loads(request.body)
+        if kwargs.keys() != {'uid'}:
+            return 0, 0
+
+        u = User.objects.filter(id=int(kwargs['uid']))
+        if not u.exists():
+            return 0, 0
+        u = u.get()
+        return u.followers.count(), u.followings.count()

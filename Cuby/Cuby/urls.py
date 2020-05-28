@@ -17,37 +17,49 @@ from django.contrib import admin
 from django.urls import path, re_path, include
 from django.views.generic import TemplateView
 from user.views import *
-from resource.views import GetUploadLimit, UploadFile, EditFileMessage, GetResource, GetDownload, DelResource
-from article.views import GetClist, GetCinfo, AddArticle, AddResource, RemoveArticle, RemoveResource, NewCollection, Rename, SetCondition, DelCollection, MoveArticle, MoveResource
+from resource.views import *
+from article.views import *
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('', TemplateView.as_view(template_name="index.html"), name='index'),
     # 他本来就是从完整的url了，前面加/会报warning
     path('register/submit', Register.as_view(), name='register'),
     path('login/submit', Login.as_view(), name='login'),
-    path('member/apply/', Member.as_view(), name='vip'),
+    path('simple_user_info', UserInfo.as_view(), name='simple_user_info'),
+    path('member/apply', Member.as_view(), name='vip'),
     path('user/', include([
-        path('change_account/', ChangeAccount.as_view(), name='user_account'),
-        path('change_password/', ChangePassword.as_view(), name='user_password'),
+        path('change_account', ChangeAccount.as_view(), name='user_account'),
+        path('change_password', ChangePassword.as_view(), name='user_password'),
     ])),
-    path('create/resource/upload_limit', GetUploadLimit.as_view(), name='upload_limit'),
-    path('create/resource/upload_file', UploadFile.as_view(), name='uploadfile'),
-    path('create/resource/new', EditFileMessage.as_view(), name='edit_file_message'),
-    path('create/resource/upload_list', GetResource.as_view(), name='get_resource'),
-    path('create/resource/download_list', GetDownload.as_view(), name='get_download'),
-    path('create/resource/delete', DelResource.as_view(), name='del_resource'),
-    path('collection/list', GetClist.as_view(), name='get_collection_list'),
-    path('collection/info', GetCinfo.as_view(), name='get_collection_info'),
-    path('collection/add_article', AddArticle.as_view(), name='add_article'),
-    path('collection/add_resource', AddResource.as_view(), name='add_resource'),
-    path('collection/remove_article', RemoveArticle.as_view(), name='remove_article'),
-    path('collection/remove_resource', RemoveResource.as_view(), name='remove_resource'),
-    path('collection/new', NewCollection.as_view(), name='new_collection'),
-    path('collection/rename', Rename.as_view(), name='rename_collection'),
-    path('collection/condition', SetCondition.as_view(), name='change_condition'),
-    path('collection/delete', DelCollection.as_view(), name='delete_collection'),
-    path('collection/move_article', MoveArticle.as_view(), name='move_article'),
-    path('collection/move_resource', MoveResource, name='move_resource'),
-    path('', TemplateView.as_view(template_name="index.html"), name='index'),
+    path('create/resource', include([
+        path('upload_limit', GetUploadLimit.as_view(), name='upload_limit'),
+        path('upload_file', UploadFile.as_view(), name='uploadfile'),
+        path('new', EditFileMessage.as_view(), name='edit_file_message'),
+        path('upload_list', GetResource.as_view(), name='get_resource'),
+        path('download_list', GetDownload.as_view(), name='get_download'),
+        path('delete', DelResource.as_view(), name='del_resource'),
+    ])),
+    path('edit/submit', SubmitArticle.as_view()),
+    path('create/', include([
+        path('follow', FollowList.as_view(), name='follow_list'),
+        path('fan', FanList.as_view(), name='fan_list'),
+    ])),
+    path('data/', include([
+        path('follows_and_fans', DataFF.as_view()),
+    ])),
+    path('collection/', include([
+        path('list', GetClist.as_view(), name='get_collection_list'),
+        path('info', GetCinfo.as_view(), name='get_collection_info'),
+        path('add_article', CollectArticle.as_view(), name='add_article'),
+        path('add_resource', CollectResource.as_view(), name='add_resource'),
+        path('remove_article', RemoveArticleFromCollection.as_view(), name='remove_article'),
+        path('remove_resource', RemoveResourceFromCollection.as_view(), name='remove_resource'),
+        path('new', NewCollection.as_view(), name='new_collection'),
+        path('rename', Rename.as_view(), name='rename_collection'),
+        path('condition', SetCondition.as_view(), name='change_condition'),
+        path('delete', DelCollection.as_view(), name='delete_collection'),
+        path('move_article', MoveArticle.as_view(), name='move_article'),
+        path('move_resource', MoveResource, name='move_resource'),
+    ])),
     re_path(r'.*', TemplateView.as_view(template_name='index.html')),
 ]

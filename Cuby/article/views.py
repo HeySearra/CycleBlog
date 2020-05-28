@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from django.views import View
 from django.shortcuts import render
 from django.db.models import Count, F, Q, Min
-from article.models import Article, Collection, ArticleCollect
+from article.models import Article, Collection, ArticleCollect, ResourceCollect
 from user.models import User
 from resource.models import Resource
 from utils.response import JSR
@@ -40,79 +40,87 @@ class GetCinfo(View):
         return rid, num
 
 
-class AddArticle(View):
+class CollectArticle(View):
     @JSR('status', 'wrong_msg')
     def post(self, request):
         kwargs: dict = json.loads(request.body)
         if kwargs.keys() != {'cid', 'aid'}:
             return -1, '参数错误'
-        if not Collection.objects.filter(id=kwargs['cid']).exist():
+        col = Collection.objects.filter(id=kwargs['cid'])
+        if not col.exist():
             return 1, '收藏夹不存在'
-        col = Collection.objects.filter(id=kwargs['cid']).get()
-        if not Article.objects.filter(id=kwargs['aid']).exist():
+        col = col.get()
+        atc = Article.objects.filter(id=kwargs['aid'])
+        if not atc.exist():
             return -1, '文章不存在'
-        article = Article.objects.filter(id=kwargs['aid']).get()
-        if article in col.articles.all():
+        atc = atc.get()
+        src_list = ArticleCollect.objects.filter(collection=col, article=atc)
+        if src_list.exists():
             return 2, '文章已经在收藏夹内'
-        col.articles.add(article)
-        col.save()
+        ArticleCollect.objects.create(Collection=col, Article=atc)
         return 0, ''
 
 
-class AddResource(View):
+class CollectResource(View):
     @JSR('status', 'wrong_msg')
     def post(self, request):
         kwargs: dict = json.loads(request.body)
         if kwargs.keys() != {'cid', 'rid'}:
             return -1, '参数错误'
-        if not Collection.objects.filter(id=kwargs['cid']).exist():
+        col = Collection.objects.filter(id=kwargs['cid'])
+        if not col.exist():
             return 1, '收藏夹不存在'
-        col = Collection.objects.filter(id=kwargs['cid']).get()
-        if not Resource.objects.filter(id=kwargs['rid']).exist():
+        col = col.get()
+        res = Resource.objects.filter(id=kwargs['rid'])
+        if not res.exist():
             return -1, '资源不存在'
-        res = Resource.objects.filter(id=kwargs['rid']).get()
-        if res in col.resources.all():
+        res = res.get()
+        src_list = ResourceCollect.objects.filter(collection=col, resource=res)
+        if src_list.exists():
             return 2, '资源已经在收藏夹内'
-        col.resources.add(res)
-        col.save()
+        ResourceCollect.objects.create(Collection=col, Resource=res)
         return 0, ''
 
 
-class RemoveArticle(View):
+class RemoveArticleFromCollection(View):
     @JSR('status', 'wrong_msg')
     def post(self, request):
         kwargs: dict = json.loads(request.body)
         if kwargs.keys() != {'cid', 'aid'}:
             return -1, '参数错误'
-        if not Collection.objects.filter(id=kwargs['cid']).exist():
-            return -1, '收藏夹不存在'
-        col = Collection.objects.filter(id=kwargs['cid']).get()
-        if not Article.objects.filter(id=kwargs['aid']).exist():
+        col = Collection.objects.filter(id=kwargs['cid'])
+        if not col.exist():
+            return 1, '收藏夹不存在'
+        col = col.get()
+        atc = Article.objects.filter(id=kwargs['aid'])
+        if not atc.exist():
             return -1, '文章不存在'
-        article = Article.objects.filter(id=kwargs['aid']).get()
-        if article not in col.articles.all():
+        atc = atc.get()
+        src_list = ArticleCollect.objects.filter(collection=col, article=atc)
+        if not src_list.exists():
             return 1, '文章不在收藏夹内'
-        col.articles.remove(article)
-        col.save()
+        atc.delete()
         return 0, ''
 
 
-class RemoveResource(View):
+class RemoveResourceFromCollection(View):
     @JSR('status', 'wrong_msg')
     def post(self, request):
         kwargs: dict = json.loads(request.body)
         if kwargs.keys() != {'cid', 'rid'}:
             return -1, '参数错误'
-        if not Collection.objects.filter(id=kwargs['cid']).exist():
-            return -1, '收藏夹不存在'
-        col = Collection.objects.filter(id=kwargs['cid']).get()
-        if not Resource.objects.filter(id=kwargs['rid']).exist():
+        col = Collection.objects.filter(id=kwargs['cid'])
+        if not col.exist():
+            return 1, '收藏夹不存在'
+        col = col.get()
+        res = Resource.objects.filter(id=kwargs['rid'])
+        if not res.exist():
             return -1, '资源不存在'
-        res = Resource.objects.filter(id=kwargs['rid']).get()
-        if res not in col.resources.all():
+        res = res.get()
+        src_list = ResourceCollect.objects.filter(collection=col, resource=res)
+        if not src_list.exists():
             return 1, '资源不在收藏夹内'
-        col.resources.remove(res)
-        col.save()
+        src_list.delete()
         return 0, ''
 
 
@@ -126,10 +134,10 @@ class NewCollection(View):
         if not u.exists():
             return -1, 0, ''
         u = u.get()
-        if Collection.objects.filter(id=kwargs['cid']).exist():
+        col = Collection.objects.filter(id=kwargs['cid'])
+        if col.exist():
             return 1, 0, '已存在该收藏夹'
-        col = Collection(name=kwargs['title'], hide=kwargs['condition'], owner=u.id)
-        col.save()
+        col = Collection.objects.create(name=kwargs['title'], hide=kwargs['condition'], owner=u.id)
         return 0, col.id, ''
 
 
@@ -139,9 +147,10 @@ class Rename(View):
         kwargs: dict = json.loads(request.body)
         if kwargs.keys() != {'cid', 'name'}:
             return -1, '参数错误'
-        if not Collection.objects.filter(id=kwargs['cid']).exist():
+        col = Collection.objects.filter(id=kwargs['cid'])
+        if not col.exist():
             return 1, '收藏夹不存在'
-        col = Collection.objects.filter(id=kwargs['cid']).get()
+        col = col.get()
         col.name = kwargs['name']
         col.save()
         return 0, ''
@@ -153,9 +162,10 @@ class SetCondition(View):
         kwargs: dict = json.loads(request.body)
         if kwargs.keys() != {'cid', 'condition'}:
             return -1, '参数错误'
-        if not Collection.objects.filter(id=kwargs['cid']).exist():
+        col = Collection.objects.filter(id=kwargs['cid'])
+        if not col.exist():
             return 1, '收藏夹不存在'
-        col = Collection.objects.filter(id=kwargs['cid']).get()
+        col = col.get()
         col.hide = kwargs['condition']
         col.save()
         return 0, ''
@@ -179,25 +189,27 @@ class MoveArticle(View):
         kwargs: dict = json.loads(request.body)
         if kwargs.keys() != {'src', 'dst', 'aid'}:
             return -1, '参数错误'
-        if not Collection.objects.filter(id=kwargs['src']).exist():
+        col_src = Collection.objects.filter(id=kwargs['src'])
+        if not col_src.exist():
             return 1, '原收藏夹不存在'
-        if not Collection.objects.filter(id=kwargs['dst']).exist():
+        col_src = col_src.get()
+        col_dst = Collection.objects.filter(id=kwargs['dst'])
+        if not col_dst.exist():
             return 1, '新收藏夹不存在'
-        col = Collection.objects.filter(id=kwargs['src']).get()
-        if not Article.objects.filter(id=kwargs['aid']).exist():
+        col_dst = col_dst.get()
+        res = Article.objects.filter(id=kwargs['aid'])
+        if not res.exist():
             return -1, '文章不存在'
-        article = Article.objects.filter(id=kwargs['aid']).get()
-        if article not in col.articles.all():
+        res = res.get()
+        src_list = ArticleCollect.objects.filter(collection=col_src, article=res)
+        if not src_list.exists():
             return -1, '文章不在原收藏夹内'
-        col.articles.remove(article)
-        col.save()
-        col = Collection.objects.filter(id=kwargs['dst']).get()
-        if article in col.articles.all():
+        src_list.delete()
+        dst_list = ArticleCollect.objects.filter(collection=col_dst, article=res)
+        if dst_list.exists():
             return -1, '文章已在新收藏夹内'
-        col.articles.add(article)
-        col.save()
+        ArticleCollect.objects.create(collection=col_dst, article=res)
         return 0, ''
-
 
 class MoveResource(View):
     @JSR('status', 'wrong_msg')
@@ -205,23 +217,26 @@ class MoveResource(View):
         kwargs: dict = json.loads(request.body)
         if kwargs.keys() != {'src', 'dst', 'rid'}:
             return -1, '参数错误'
-        if not Collection.objects.filter(id=kwargs['src']).exist():
+        col_src = Collection.objects.filter(id=kwargs['src'])
+        if not col_src.exist():
             return 1, '原收藏夹不存在'
-        if not Collection.objects.filter(id=kwargs['dst']).exist():
+        col_src = col_src.get()
+        col_dst = Collection.objects.filter(id=kwargs['dst'])
+        if not col_dst.exist():
             return 1, '新收藏夹不存在'
-        col = Collection.objects.filter(id=kwargs['src']).get()
-        if not Resource.objects.filter(id=kwargs['rid']).exist():
+        col_dst = col_dst.get()
+        res = Resource.objects.filter(id=kwargs['rid'])
+        if not res.exist():
             return -1, '资源不存在'
-        res = Resource.objects.filter(id=kwargs['rid']).get()
-        if res not in col.resources.all():
+        res = res.get()
+        src_list = ResourceCollect.objects.filter(collection=col_src, resource=res)
+        if not src_list.exists():
             return -1, '资源不在原收藏夹内'
-        col.resources.remove(res)
-        col.save()
-        col = Collection.objects.filter(id=kwargs['dst']).get()
-        if res in col.resources.all():
+        src_list.delete()
+        dst_list = ResourceCollect.objects.filter(collection=col_dst, resource=res)
+        if dst_list.exists():
             return -1, '资源已在新收藏夹内'
-        col.resources.add(res)
-        col.save()
+        ResourceCollect.objects.create(collection=col_dst, resource=res)
         return 0, ''
 
 

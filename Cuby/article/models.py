@@ -28,14 +28,14 @@ class Collection(models.Model):
 class ArticleCollect(models.Model):
     time = models.DateTimeField(verbose_name='收藏时间', auto_now_add=True)
 
-    user = models.ForeignKey('Collection', on_delete=models.CASCADE)
+    collection = models.ForeignKey('Collection', on_delete=models.CASCADE)
     article = models.ForeignKey('article.Article', on_delete=models.CASCADE)
 
 
 class ResourceCollect(models.Model):
     time = models.DateTimeField(verbose_name='收藏时间', auto_now_add=True)
 
-    user = models.ForeignKey('Collection', on_delete=models.CASCADE)
+    collection = models.ForeignKey('Collection', on_delete=models.CASCADE)
     resource = models.ForeignKey('resource.Resource', on_delete=models.CASCADE)
 
 
