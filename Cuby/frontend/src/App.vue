@@ -1,32 +1,31 @@
 <template>
   <div id="app">
-    <div id="nav">
-      <router-link to="/">Home</router-link> |
-      <router-link to="/about">About</router-link>
-    </div>
     <router-view/>
+    <el-backtop></el-backtop>
   </div>
 </template>
 
+<script>
+
+export default {
+  name: 'App',
+}
+</script>
+
 <style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-}
+  body, .el-header, .el-footer{
+    margin:0;
+    padding:0;
+    min-width:1000px;
+  }
 
-#nav {
-  padding: 30px;
-}
+  body{
+    background-color: #f6f6f6;
+    width:100vw !important;
+    overflow-x: hidden;
+  }
 
-#nav a {
-  font-weight: bold;
-  color: #2c3e50;
-}
-
-#nav a.router-link-exact-active {
-  color: #42b983;
-}
+  /* #app{
+    overflow-y: scroll;
+  } */
 </style>
